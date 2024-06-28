@@ -94,6 +94,10 @@ $route['emp_list/(:any)'] = 'admin/emp_list/$1';
 
 
 
+/*News*/
+$route['news_categories/(:any)'] = 'admin/news/news_categories/$1';
+$route['news/(:any)'] = 'admin/news/news/$1';
+$route['local_news/(:any)'] = 'admin/news/local_news/$1';
 /*Food*/
 $route['food_menu/(:any)'] = 'food/food_menu/$1';
 $route['food_item/(:any)'] = 'food/food_item/$1';

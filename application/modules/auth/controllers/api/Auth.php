@@ -182,46 +182,9 @@ class Auth extends MY_REST_Controller
                     $this->set_response_simple(NULL, 'Email not found', REST_Controller::HTTP_NON_AUTHORITATIVE_INFORMATION, FALSE);
                 }
             }else{
-                //$forgotten = $this->ion_auth->forgotten_password($identity->{$this->config->item('identity', 'ion_auth')});
-
-                $email=$identity->{$this->config->item('identity', 'ion_auth')};
-                $rand_code=rand(1000,9999);
-                $to=$email;
-                $message = $this->load->view($this->config->item('email_templates', 'ion_auth').'forgot_password_app.tpl.php', ['rand_code' => $rand_code,'identity'=>$email], true);
-                $subject='Daily Grows - Forgotten Password Verification';
-                $res=sendEmail(NULL,$to, $subject, $message);
-                $user_unique_id['otp']=$rand_code;
-                $user_unique_id['identity']=$email;
-                if ($res) {
-                    $this->set_response_simple($user_unique_id, 'Check your email for OTP', REST_Controller::HTTP_OK, TRUE);
-                } else {
-                    $this->set_response_simple(NULL, 'Email not sent', REST_Controller::HTTP_NO_CONTENT, FALSE);
-                }
-            }
-        }
-    }
-    public function reset_password_post(){
-        $_POST = json_decode(file_get_contents("php://input"), TRUE);
-        $this->form_validation->set_rules('identity', 'Identity', 'trim|required');
-        $this->form_validation->set_rules('new', 'Password', 'required|min_length[' . $this->config->item('min_password_length', 'ion_auth') . ']|max_length[' . $this->config->item('max_password_length', 'ion_auth') . ']|matches[new_confirm]');
-        $this->form_validation->set_rules('new_confirm', 'Confirm Password', 'required');
-        if ($this->form_validation->run() == FALSE) {
-            $this->set_response(validation_errors(), REST_Controller::HTTP_NO_CONTENT, FALSE);
-        } else {
-            $identity_column = $this->config->item('identity', 'ion_auth');
-            $identity = $this->ion_auth->where($identity_column, $this->input->post('identity'))->users()->row();
-            if (empty($identity) || $identity == null) {
-                if ($this->config->item('identity', 'ion_auth') != 'email') {
-                    $this->set_response_simple(NULL, 'Identity not found', REST_Controller::HTTP_NON_AUTHORITATIVE_INFORMATION, FALSE);
-                } else {
-                    $this->set_response_simple(NULL, 'Email not found', REST_Controller::HTTP_NON_AUTHORITATIVE_INFORMATION, FALSE);
-                }
-            }else{
-
-                $email=$identity->{$this->config->item('identity', 'ion_auth')};
-                $change = $this->ion_auth->reset_password($email, $this->input->post('new'));
-                if ($change) {
-                    $this->set_response_simple($user_unique_id, $this->ion_auth->messages(), REST_Controller::HTTP_OK, TRUE);
+                $forgotten = $this->ion_auth->forgotten_password($identity->{$this->config->item('identity', 'ion_auth')});
+                if ($forgotten) {
+                    $this->set_response_simple(NULL, $this->ion_auth->messages(), REST_Controller::HTTP_OK, TRUE);
                 } else {
                     $this->set_response_simple(NULL, $this->ion_auth->errors(), REST_Controller::HTTP_NO_CONTENT, FALSE);
                 }
@@ -234,64 +197,36 @@ class Auth extends MY_REST_Controller
             "token" => $this->validate_token($this->input->get_request_header('X_AUTH_TOKEN'))
         ], 'verify', http_response_code(), TRUE);
     }
-    public function logout_post()
-    {
-        $this->validate_token($this->input->get_request_header('X_AUTH_TOKEN'));
-        //print_r($res);die;
-        return $this->set_response(new stdclass(),"Logout SuccessFully.",MY_REST_Controller::HTTP_UNAUTHORIZED);
-    }
+    
     public function create_user_post($id = 20){
-        $_POST = json_decode(file_get_contents("php://input"), TRUE);
         $group = $this->group_model->where('id', $id)->get();
         if(! empty($group)){
-            $referal_id = NULL;
-            $referal_found='1';
-            if($_POST['referal_id'] != ''){
-                $refer=$this->db->select('id')->get_where('users',['unique_id'=>$_POST['referal_id']])->row_array();
-                if(count($refer)>0){
-                    $referal_id=$refer['id'];    
-                    $referal_found='1';
-                }else{
-                    $referal_found='0';
-                }
+        $unique_id = generate_serial_no($group['code'], 4, $group['last_id']);
+        $this->group_model->update([
+            'last_id' => $group['last_id'] + 1
+        ], $group['id']);
+        $email = strtolower($this->input->post('email'));
+        $identity = ($this->config->item('identity', 'ion_auth') === 'email') ? $email : $unique_id;
+        $additional_data = array(
+            'first_name' => $this->input->post('name'),
+            'unique_id' => $unique_id,
+            'phone' => $this->input->post('mobile'),
+            'active' => 1
+        );
+        $group_id[0] = $id;
+        $user_id = $this->ion_auth->register($identity, (empty($this->input->post('password')))? '1234': $this->input->post('password'),$email, $additional_data, $group_id);
+        $this->db->insert('users_groups', ['user_id' => $user_id, 'group_id' => $id]);
+        if($user_id){
+            $user_unique_id = $this->user_model->fields('unique_id')->where('id', $user_id)->get();
+            if (!file_exists(base_url().'uploads/profile_image/')) {
+                mkdir(base_url().'uploads/profile_image/', 0777, true);
             }
-            if($referal_found == '1'){
-                $unique_id = generate_serial_no($group['code'], 4, $group['last_id']);
-                $this->group_model->update([
-                    'last_id' => $group['last_id'] + 1
-                ], $group['id']);
-                $email = strtolower($this->input->post('email'));
-                $identity = ($this->config->item('identity', 'ion_auth') === 'email') ? $email : $unique_id;
-                $additional_data = array(
-                    'first_name' => $this->input->post('name'),
-                    'unique_id' => $unique_id,
-                    'phone' => $this->input->post('mobile'),
-                    'status' => 2
-                );
-                $group_id[0] = $id;
-                $user_id = $this->ion_auth->register($identity, (empty($this->input->post('password')))? '1234': $this->input->post('password'),$email, $additional_data, $group_id);
-                if($user_id){
-                    //$this->db->insert('users_groups', ['user_id' => $user_id, 'group_id' => $id]);
-                    $user_unique_id = $this->user_model->fields('unique_id')->where('id', $user_id)->get();
-                    if (!file_exists(base_url().'uploads/profile_image/')) {
-                        mkdir(base_url().'uploads/profile_image/', 0777, true);
-                    }
-                    copy('./assets/img/user-app.jpg', './uploads/profile_image/profile_'.$user_unique_id.'.jpg');
-                    //file_put_contents(base_url()."/uploads/profile_image/profile_$user_unique_id.jpg", base64_decode($this->input->post('image')));
-                    $rand_code=rand(1000,9999);
-                    //$message = $this->load->view('emails/verify_user', ['rand_code' => $rand_code], TRUE);
-                    $to=$email;
-                    $message = $this->load->view($this->config->item('email_templates', 'ion_auth').'verify_user.tpl.php', ['rand_code' => $rand_code,'identity'=>$email], true);
-                    $subject='Daily Grows - Account Activation';
-                    $res=sendEmail(NULL,$to, $subject, $message);
-                    $user_unique_id['verify_code']=$rand_code;
-                    $this->set_response_simple($user_unique_id, $this->ion_auth->messages(), REST_Controller::HTTP_OK, TRUE);
-                }else{
-                    $this->set_response_simple($user_id, $this->ion_auth->errors(), REST_Controller::HTTP_NON_AUTHORITATIVE_INFORMATION, FALSE);
-                }
-            }else{
-                $this->set_response_simple(null, 'Invalid Referal ID!', REST_Controller::HTTP_NON_AUTHORITATIVE_INFORMATION, FALSE);
-            }
+            copy('./assets/img/user-app.jpg', './uploads/profile_image/profile_'.$user_unique_id.'.jpg');
+            //file_put_contents(base_url()."/uploads/profile_image/profile_$user_unique_id.jpg", base64_decode($this->input->post('image')));
+            $this->set_response_simple($user_unique_id, $this->ion_auth->messages(), REST_Controller::HTTP_OK, TRUE);
+        }else{
+            $this->set_response_simple($user_id, $this->ion_auth->errors(), REST_Controller::HTTP_NON_AUTHORITATIVE_INFORMATION, FALSE);
+        }
         }else{
             $this->set_response_simple(null, 'Group is not available!', REST_Controller::HTTP_NON_AUTHORITATIVE_INFORMATION, FALSE);
         }
@@ -300,40 +235,6 @@ class Auth extends MY_REST_Controller
     public function roles_get(){
         $data = $this->group_model->fields('id, name')->where('status', 1)->get_all();
         $this->set_response_simple($data, "List of roles", REST_Controller::HTTP_OK, TRUE);
-    }
-    public function activate_user_post(){
-        $_POST = json_decode(file_get_contents("php://input"), TRUE);
-        $this->load->model('wallet_transaction_model');
-        $unique_id=$this->input->post('unique_id');
-        if($unique_id != ''){
-            $user_data = $this->user_model->where('unique_id', $unique_id)->get();
-            if($user_data){
-                $this->user_model->update(['status'=>1],$user_data['id']);
-                $referal_id=$user_data['referal_id'];
-                if($referal_id != ''){
-                    $wallet = $this->user_model->where('id', $referal_id)->fields('wallet,unique_id,id')->as_array()->get();
-                    $amount=$this->setting_model->where('key', 'pay_per_referal')->get()['value'];
-                    $id = $this->wallet_transaction_model->insert([
-                        'user_id' => $wallet['id'],
-                        //'type' => 'CREDIT',
-                        'credit' => $amount,
-                        'balance' => floatval($wallet['wallet']) + $amount,
-                        'transaction_id'=>'',
-                        'transaction_type' => 'referrer',
-                        'title' => get_transaction_type('referrer'),
-                        'reference' => $wallet['unique_id'],
-                        'description' => 'You got referal amount.',
-                    ]);
-                    $this->user_model->update(['wallet'=>(floatval($wallet['wallet']) + $amount)],$wallet['id']);
-                }
-                $this->set_response_simple($unique_id, 'SuccessFully Activated', REST_Controller::HTTP_OK, TRUE);
-            }else{
-                $this->set_response_simple(null, 'Invalid Unique Id!', REST_Controller::HTTP_NON_AUTHORITATIVE_INFORMATION, FALSE);
-            }
-        }else{
-            $this->set_response_simple(null, 'Unique Id is Required!', REST_Controller::HTTP_NON_AUTHORITATIVE_INFORMATION, FALSE);
-        }
-
     }
 }
 

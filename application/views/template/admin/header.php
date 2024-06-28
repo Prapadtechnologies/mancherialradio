@@ -6,7 +6,7 @@
 						<li><a href="#" class="nav-link nav-link-lg fullscreen-btn">
 								<i data-feather="maximize"></i>
 							</a></li>
-						<!-- <li>
+						<li>
 							<form class="form-inline mr-auto">
 								<div class="search-element">
 									<input class="form-control" type="search" placeholder="Search" aria-label="Search"
@@ -16,7 +16,7 @@
 									</button>
 								</div>
 							</form>
-						</li> -->
+						</li>
 					</ul>
 				</div>
 				<ul class="navbar-nav navbar-right">
@@ -148,7 +148,7 @@
 							</a> 
 						<?php }else{ 
 							?>
-<a href="<?php echo base_url();?>vendor_profile/edit?id=<?php echo $this->ion_auth->get_user_id();?>" class="dropdown-item has-icon"><i class="far fa-user" style="font-size: 17px;"></i> Profile
+<a href="<?php echo base_url();?>vendor_profile/edit?id=<?php echo $this->vendor_list_model->fields('id')->where('vendor_user_id',$this->ion_auth->get_user_id())->get()['id'];?>" class="dropdown-item has-icon"><i class="far fa-user" style="font-size: 17px;"></i> Profile
 							</a> 
 					<?php }?>
 							<a href="<?php echo base_url('profile/r')?>" class="dropdown-item has-icon"> 

@@ -401,36 +401,20 @@
                     </header>
                     <div class="card-body">
                         <div class="form-group row">
-                            <label class="col-sm-6 ">Pay per referal (in rupees)<span class="required">*</span></label>
-                            <div class="col-sm-6">
-                                <input type="number" name="pay_per_referal" class="form-control" placeholder="Pay per vendor" required="" value="<?php echo $this->setting_model->where('key','pay_per_referal')->get()['value']?>">
+                            <label class="col-sm-3 ">Pay per vendor<span class="required">*</span></label>
+                            <div class="col-sm-9">
+                                <input type="text" name="pay_per_vendor" class="form-control" placeholder="Pay per vendor" required="" value="<?php echo $this->setting_model->where('key','pay_per_vendor')->get()['value']?>">
                             </div>
-                            <div class="invalid-feedback">Pay per referal?</div>
-                            <?php echo form_error('pay_per_referal','<div style="color:red">','</div>');?>
+                            <div class="invalid-feedback">Pay per vendor?</div>
+                            <?php echo form_error('pay_per_vendor','<div style="color:red">','</div>');?>
                         </div>
                         <div class="form-group row">
-                            <label class="col-sm-6 ">Minimum withdraw (in rupees)<span class="required">*</span></label>
-                            <div class="col-sm-6">
-                                <input type="number" name="min_withdraw" class="form-control" placeholder="Minimum Withdraw Amount" required="" value="<?php echo $this->setting_model->where('key','min_withdraw')->get()['value']?>">
+                            <label class="col-sm-3 ">Vendor validation count<span class="required">*</span></label>
+                            <div class="col-sm-9">
+                                <input type="text" name="vendor_validation" class="form-control" placeholder="Vendor validation count" required="" value="<?php echo $this->setting_model->where('key','vendor_validation')->get()['value']?>">
                             </div>
-                            <div class="invalid-feedback">Minimum withdraw?</div>
-                            <?php echo form_error('min_withdraw','<div style="color:red">','</div>');?>
-                        </div>
-                        <div class="form-group row">
-                            <label class="col-sm-6 ">Commission on withdraw (in percentage)<span class="required">*</span></label>
-                            <div class="col-sm-6">
-                                <input type="number" name="commission_on_withdraw" class="form-control" placeholder="Commission on withdraw" required="" value="<?php echo $this->setting_model->where('key','commission_on_withdraw')->get()['value']?>">
-                            </div>
-                            <div class="invalid-feedback">Commission on withdraw?</div>
-                            <?php echo form_error('commission_on_withdraw','<div style="color:red">','</div>');?>
-                        </div>
-                        <div class="form-group row">
-                            <label class="col-sm-6 ">Withdraw days (in days)<span class="required">*</span></label>
-                            <div class="col-sm-6">
-                                <input type="number" name="withdraw_days" class="form-control" placeholder="Vendor validation count" required="" value="<?php echo $this->setting_model->where('key','withdraw_days')->get()['value']?>">
-                            </div>
-                            <div class="invalid-feedback">Withdraw days?</div>
-                            <?php echo form_error('withdraw_days','<div style="color:red">','</div>');?>
+                            <div class="invalid-feedback">Vendor validation count?</div>
+                            <?php echo form_error('vendor_validation','<div style="color:red">','</div>');?>
                         </div>
 
                         <div class="row justify-content-end">
@@ -443,7 +427,7 @@
             
             </section></form>
         </div>
-        <!-- <div class="col-md-6">
+        <div class="col-md-6">
             <form id="form-smtp" action="<?php echo base_url('settings/order_payment');?>" class="needs-validation form" novalidate="" method="post" enctype="multipart/form-data">
                 <section class="card">
                     <header class="card-header">
@@ -480,7 +464,69 @@
                     </div>
             
             </section></form>
-        </div> -->
+        </div>
+        <div class="col-md-6">
+            <form id="form-smtp" action="<?php echo base_url('settings/order_settings');?>" class="needs-validation form" novalidate="" method="post" enctype="multipart/form-data">
+                <section class="card">
+                    <header class="card-header">
+                        <div class="card-actions">
+                            <a href="#" class="card-action card-action-toggle" data-card-toggle=""></a>
+                            <a href="#" class="card-action card-action-dismiss" data-card-dismiss=""></a>
+                        </div>
+                        <h2 class="card-title ven">Order Settings</h2>
+                    </header>
+                    <div class="card-body">
+                        <div class="form-group row">
+                            <label class="col-sm-3 ">Min Order Price<span class="required">*</span></label>
+                            <div class="col-sm-9">
+                               <input type="number" class="form-control" name="min_order_price" placeholder="Min Order Price" required="" min="1" value="<?php echo $this->vendor_settings_model->where('key', 'min_order_price')->get()['value'];?>">
+                            </div>
+                            <div class="invalid-feedback">Min Order Price ?</div>
+                            <?php echo form_error('min_order_price','<div style="color:red">','</div>');?>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-3 ">Delivery Free Range (Km) <span class="required">*</span></label>
+                            <div class="col-sm-9">
+                                <input type="number" class="form-control" name="delivery_free_range" placeholder="Delivery Free Range (Km)" required="" min="0" value="<?php echo $this->vendor_settings_model->where('key','delivery_free_range')->get()['value'];?>">
+                            </div>
+                            <div class="invalid-feedback">Delivery Free Range (Km) ?</div>
+                            <?php echo form_error('delivery_free_range','<div style="color:red">','</div>');?>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-3 ">Min Delivery Fee<span class="required">*</span></label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" name="min_delivery_fee" placeholder="Min Delivery Feee" required="" value="<?php echo $this->vendor_settings_model->where('key','min_delivery_fee')->get()['value'];?>">
+                            </div>
+                            <div class="invalid-feedback">Min Delivery Fee ?</div>
+                            <?php echo form_error('min_delivery_fee','<div style="color:red" "margin_left=100px">','</div>');?>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-3 ">Extra Delivery Fee (per km)<span class="required">*</span></label>
+                            <div class="col-sm-9">
+                                 <input type="text" class="form-control" name="ext_delivery_fee" placeholder="Min Delivery Feee" required="" value="<?php echo $this->vendor_settings_model->where('key','ext_delivery_fee')->get()['value'];?>">
+                            </div>
+                            <div class="invalid-feedback">Extra Delivery Fee (per km) ?</div>
+                            <?php echo form_error('ext_delivery_fee','<div style="color:red" "margin_left=100px">','</div>');?>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-3 ">Tax (in %)<span class="required">*</span></label>
+                            <div class="col-sm-9">
+                                <input type="number" required="" class="form-control" name="tax" placeholder="Tax" value="<?php echo $this->vendor_settings_model->where('key','tax')->get()['value'];?>" min="0">
+                            </div>
+                            <div class="invalid-feedback">Tax ?</div>
+                            <?php echo form_error('tax','<div style="color:red" "margin_left=100px">','</div>');?>
+                        </div>
+
+                        <div class="row justify-content-end">
+                            <div class="col-sm-9">
+                                <button class="btn btn-primary">Submit</button>
+                                <input type="button" class="btn btn-default" onClick="clear_form('form-smtp')" value="Reset" />
+                            </div>
+                        </div>
+                    </div>
+            
+            </section></form>
+        </div>
         <!--      <div class="col-md-6">
             <form id="form-news" action="<?php echo base_url('settings/news');?>" class="needs-validation form" novalidate="" method="post" enctype="multipart/form-data">
                 <section class="card">

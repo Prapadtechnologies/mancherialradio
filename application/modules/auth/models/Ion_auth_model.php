@@ -976,7 +976,6 @@ class Ion_auth_model extends CI_Model
 		                  ->where($this->identity_column, $identity)
 		                  ->limit(1)
 		    			  ->order_by('id', 'desc')
-		    			  ->where('status',1)
 		                  ->get($this->tables['users']);
 
 		if($this->is_max_login_attempts_exceeded($identity))

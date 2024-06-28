@@ -70,12 +70,28 @@ class User_model extends MY_Model {
 				'get_relate' => FALSE
 		);
 		
+		$this->has_many_pivot ['wishlist'] = array (
+		    'foreign_model' => 'vendor_list_model',
+		    'pivot_table' => 'wishlist',
+		    'local_key' => 'id',
+		    'pivot_local_key' => 'user_id',
+		    'pivot_foreign_key' => 'list_id',
+		    'foreign_key' => 'id',
+		    'get_relate' => FALSE
+		);
 		
 		$this->has_many['addresses'] = array(
 		    'foreign_model' => 'Users_address_model',
 		    'foreign_table' => 'users_address',
 		    'local_key' => 'id',
 		    'foreign_key' => 'user_id',
+		    'get_relate' => FALSE
+		);
+		$this->has_many['vendors'] = array(
+		    'foreign_model' => 'Vendor_list_model',
+		    'foreign_table' => 'vendors_list',
+		    'local_key' => 'id',
+		    'foreign_key' => 'executive_id',
 		    'get_relate' => FALSE
 		);
 	}

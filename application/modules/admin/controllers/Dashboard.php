@@ -17,6 +17,7 @@ class Dashboard extends MY_Controller
         if (! $this->ion_auth->logged_in())
             redirect('auth/login');
         
+            $this->load->model('vendor_list_model');
             $this->load->model('wallet_transaction_model');
     }
 

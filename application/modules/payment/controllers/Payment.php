@@ -7,6 +7,7 @@ class Payment extends MY_Controller
     {
         parent::__construct();
         $this->template = 'template/admin/main';
+        $this->load->model('vendor_list_model');
         $this->load->model('wallet_transaction_model');
         $this->load->model('user_model');
     }

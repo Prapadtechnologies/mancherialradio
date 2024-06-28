@@ -10,8 +10,19 @@ class Master extends MY_REST_Controller
     public function __construct()
     {
         parent::__construct();
+        $this->load->model('category_model');
+        $this->load->model('sub_category_model');
+        $this->load->model('amenity_model');
+        $this->load->model('service_model');
+        $this->load->model('state_model');
+        $this->load->model('district_model');
+        $this->load->model('constituency_model');
+        $this->load->model('day_model');
+        $this->load->model('rating_model');
         $this->load->model('cat_banners_model');
         $this->load->model('user_model');
+        $this->load->model('brand_model');
+        $this->load->model('wishlist_model');
     }
 
     /**
@@ -206,7 +217,7 @@ class Master extends MY_REST_Controller
          * $token_data = $this->validate_token($this->input->get_request_header('X_AUTH_TOKEN'));
          */
         $sliders = $this->sliders_model->get_all();
-        //$cat_banners = $this->cat_banners_model->get_all();
+        $cat_banners = $this->cat_banners_model->get_all();
         $top = $this->advertisements_model->where('type', 'top')->get_all();
         $middle = $this->advertisements_model->where('type', 'middle')->get_all();
         $bottom = $this->advertisements_model->where('type', 'bottom')->get_all();

@@ -24,6 +24,10 @@ class Admin extends MY_Controller
         $this->load->model('setting_model');
         $this->load->model('sliders_model');
         $this->load->model('advertisements_model');
+        $this->load->model('user_service_model');
+        $this->load->model('category_model');
+        $this->load->model('vendor_list_model');
+        $this->load->model('cat_banners_model');
     }
 
     public function index()
@@ -213,7 +217,7 @@ class Admin extends MY_Controller
     {
         /* if (! $this->ion_auth_acl->has_permission('settings'))
             redirect('admin'); */
-        //$this->load->model('vendor_settings_model');
+        $this->load->model('vendor_settings_model');
         if ($type == 'r') {
             $this->data['title'] = 'Settings';
             $this->data['content'] = 'admin/admin/settings';
@@ -306,22 +310,53 @@ class Admin extends MY_Controller
             }
         }elseif ($type == 'payment'){
             $this->setting_model->update([
-                'key' => 'pay_per_referal',
-                'value' => $this->input->post('pay_per_referal'),
+                'key' => 'pay_per_vendor',
+                'value' => $this->input->post('pay_per_vendor'),
             ],'key');
             $this->setting_model->update([
-                'key' => 'commission_on_withdraw',
-                'value' => $this->input->post('commission_on_withdraw'),
-            ],'key');
-            $this->setting_model->update([
-                'key' => 'withdraw_days',
-                'value' => $this->input->post('withdraw_days'),
-            ],'key');
-            $this->setting_model->update([
-                'key' => 'min_withdraw',
-                'value' => $this->input->post('min_withdraw'),
+                'key' => 'vendor_validation',
+                'value' => $this->input->post('vendor_validation'),
             ],'key');
             redirect('settings/r', 'refresh');
+        }elseif ($type == 'order_payment'){
+            $this->setting_model->update([
+                'key' => 'pay_per_order',
+                'value' => $this->input->post('pay_per_order'),
+            ],'key');
+            $this->setting_model->update([
+                'key' => 'order_validation',
+                'value' => $this->input->post('order_validation'),
+            ],'key');
+            redirect('settings/r', 'refresh');
+        }elseif ($type == 'news'){
+            $this->setting_model->update([
+                'key' => 'pay_per_news',
+                'value' => $this->input->post('pay_per_news'),
+            ],'key');
+           
+            redirect('settings/r', 'refresh');
+        }elseif ($type == 'order_settings') {
+             $this->vendor_settings_model->update([
+                    'key' => 'min_order_price',
+                    'value' => $this->input->post('min_order_price'),
+                ],'key');
+                $this->vendor_settings_model->update([
+                    'key' => 'delivery_free_range',
+                    'value' => $this->input->post('delivery_free_range'),
+                ],'key');
+                $this->vendor_settings_model->update([
+                    'key' => 'min_delivery_fee',
+                    'value' => $this->input->post('min_delivery_fee'),
+                ],'key');
+                $this->vendor_settings_model->update([
+                    'key' => 'ext_delivery_fee',
+                    'value' => $this->input->post('ext_delivery_fee'),
+                ],'key');
+                $this->vendor_settings_model->update([
+                    'key' => 'tax',
+                    'value' => $this->input->post('tax'),
+                ],'key');
+                redirect('settings/r', 'refresh');
         }
     }
     /**
@@ -339,7 +374,9 @@ class Admin extends MY_Controller
             $this->data['title'] = 'Slides';
             $this->data['content'] = 'admin/admin/sliders';
             $this->data['sliders'] = $this->sliders_model->get_all();
+            $this->data['cat_banner'] = $this->cat_banners_model->get_all();
             $this->data['top'] = $this->advertisements_model->where('type','top')->get_all();
+            $this->data['categories'] = $this->category_model->get_all();
             $this->data['middle'] = $this->advertisements_model->where('type','middle')->get_all();
             $this->data['bottom'] = $this->advertisements_model->where('type','bottom')->get_all();
             $this->data['last'] = $this->advertisements_model->where('type','last')->get_all();
@@ -357,6 +394,34 @@ class Admin extends MY_Controller
             redirect('sliders/r', 'refresh');
         } elseif ($type == 'd') {
                 $this->sliders_model->delete(['id' => $this->input->post('id')]);
+        }elseif ($type == 'cat_banners'){
+            if ($_FILES['cat_banners']['name'] !== '') {
+                $path = $_FILES['cat_banners']['name'];
+                $ext = pathinfo($path, PATHINFO_EXTENSION);
+                $cat_id =  $this->input->post('cat_id');
+                $catb_id = $this->cat_banners_model->insert([
+                    'image' => $path,
+                    'ext' => $ext,
+                    'cat_id'=>$cat_id
+                ]);
+                $this->file_up("cat_banners", "cat_banners", $catb_id, '', 'no', '.' . $ext);
+            }
+            redirect('sliders/r', 'refresh');
+        }
+        elseif ($type == 'cat_bottom_banners'){
+            if ($_FILES['file']['name'] !== '') {
+                $path = $_FILES['file']['name'];
+                $ext = pathinfo($path, PATHINFO_EXTENSION);
+                $cat_id =   $this->input->post('cat_id');
+                /* ([
+                    'name' => $this->input->post('name'),
+                    'desc' => $this->input->post('desc'),
+                    'terms' => $this->input->post('terms'),
+                ]);*/
+                //$this->file_up("cat_bottom_banners", "cat_bottom_banners",  '', 'no', '.' . $ext);
+                $this->file_up("file", "cat_bottom_banners", $cat_id, '', 'no');
+            }
+            redirect('sliders/r', 'refresh');
         }
             
     }
@@ -438,20 +503,19 @@ class Admin extends MY_Controller
             redirect('admin'); */
         
         if ($type == 'adver') {
-            if ($_FILES['advertisement']['name'] !== '') {
-                if ($_FILES['file']['name'] !== '') {   
+            if ($_FILES['advertisement']['name'] !== '') {if ($_FILES['file']['name'] !== '') {
                         $path = $_FILES['file']['name'];
                         $ext = pathinfo($path, PATHINFO_EXTENSION);
                         $this->file_up("file", "food_menu", $this->input->post('id'), '', 'no');
                     }
                     $path = $_FILES['advertisement']['name'];
                     $ext = pathinfo($path, PATHINFO_EXTENSION);
-                    $slider_id = $this->advertisements_model->insert([
+            $slider_id = $this->advertisements_model->insert([
                     'type' => $this->input->post('type'),
                     'image' => $path,
                     'ext' => $ext
                 ]);
-                $this->file_up("advertisement", "advertisements", $slider_id, '', 'no', '.' . $ext);
+            $this->file_up("advertisement", "advertisements", $slider_id, '', 'no', '.' . $ext);
             }
             redirect('sliders/r', 'refresh');
         } elseif ($type == 'd') {
@@ -459,6 +523,133 @@ class Admin extends MY_Controller
             }
     }
 
+    /**
+     * Advertisements Management
+     *
+     * @author Mahesh
+     * @param string $type
+     */
+    public function vendor_settings($type = 'r')
+    {
+        /* if (! $this->ion_auth_acl->has_permission('settings'))
+            redirect('admin'); */
+
+        $this->load->model('vendor_settings_model');
+        $this->load->model('vendor_list_model');
+        $this->load->model('food_settings_model');
+        $this->load->model('food_item_model');
+        if ($type == 'r') {
+            $this->data['title'] = 'Vendor Settings';
+            $this->data['content'] = 'admin/admin/vendor_settings';
+            //$this->data['settings'] = $this->vendor_settings_model->get();
+            $this->data['categories'] = $this->category_model->get_all();
+            if(isset($_GET) && !empty($_GET)){
+            $ven=$this->vendor_list_model->fields('id,name,vendor_user_id,status')->order_by('id', 'DESC')->where(['status'=> 1,'category_id'=>$_GET['category_id']])->get_all();
+            }else{
+                $ven=array();
+            }
+            $this->data['vendors'] = $ven;
+            $this->_render_page($this->template, $this->data);
+        } elseif ($type == 'food') {
+             $this->form_validation->set_rules($this->vendor_settings_model->rules['food']);
+            if ($this->form_validation->run() == FALSE) {//echo validation_errors();
+                redirect('vendor_settings/r', 'refresh');
+            } else {
+                if($this->input->post('vendor_id')=='' || $this->input->post('vendor_id')=='all'){
+                $this->vendor_settings_model->update([
+                    'key' => 'min_order_price',
+                    'value' => $this->input->post('min_order_price'),
+                ],'key');
+                $this->vendor_settings_model->update([
+                    'key' => 'delivery_free_range',
+                    'value' => $this->input->post('delivery_free_range'),
+                ],'key');
+                $this->vendor_settings_model->update([
+                    'key' => 'min_delivery_fee',
+                    'value' => $this->input->post('min_delivery_fee'),
+                ],'key');
+                $this->vendor_settings_model->update([
+                    'key' => 'ext_delivery_fee',
+                    'value' => $this->input->post('ext_delivery_fee'),
+                ],'key');
+                $this->vendor_settings_model->update([
+                    'key' => 'tax',
+                    'value' => $this->input->post('tax'),
+                ],'key');
+
+                if($this->input->post('vendor_id')=='all'){
+                    $all_v=$this->vendor_list_model->fields('vendor_user_id,status')->order_by('id', 'DESC')->where(['status'=> 1])->get_all();
+                    foreach ($all_v as $ven) {
+                        $r=$this->food_settings_model->fields('id')->where('vendor_id',$ven['vendor_user_id'])->get();
+                    if($r!=''){
+                $this->food_settings_model->update([
+                        'min_order_price' => $this->input->post('min_order_price'),
+                        'min_delivery_fee' => $this->input->post('min_delivery_fee'),
+                        'ext_delivery_fee' => $this->input->post('ext_delivery_fee'),
+                        'delivery_free_range' => $this->input->post('delivery_free_range'),
+                        'tax' => $this->input->post('tax'),
+                    ], ['vendor_id'=>$ven['vendor_user_id']]);
+                }else{
+                    $this->food_settings_model->insert([
+                        'min_order_price' => $this->input->post('min_order_price'),
+                        'delivery_free_range' => $this->input->post('delivery_free_range'),
+                        'min_delivery_fee' => $this->input->post('min_delivery_fee'),
+                        'ext_delivery_fee' => $this->input->post('ext_delivery_fee'),
+                        'label' => $this->input->post('label'),
+                        'tax' => $this->input->post('tax'),
+                        'vendor_id'=>$ven['vendor_user_id']
+                    ]);
+                }
+                    }
+                    /*$this->food_settings_model->update([
+                        'min_order_price' => $this->input->post('min_order_price'),
+                        'min_delivery_fee' => $this->input->post('min_delivery_fee'),
+                        'ext_delivery_fee' => $this->input->post('ext_delivery_fee'),
+                        'delivery_free_range' => $this->input->post('delivery_free_range'),
+                        'tax' => $this->input->post('tax'),
+                        'label' => $this->input->post('label')
+                    ]);*/
+                }
+                
+                }else{
+                        
+                $r=$this->food_settings_model->fields('id')->where('vendor_id',$this->input->post('vendor_id'))->get();
+                    if($r!=''){
+                $this->food_settings_model->update([
+                        'min_order_price' => $this->input->post('min_order_price'),
+                        'min_delivery_fee' => $this->input->post('min_delivery_fee'),
+                        'ext_delivery_fee' => $this->input->post('ext_delivery_fee'),
+                        'delivery_free_range' => $this->input->post('delivery_free_range'),
+                        'label' => $this->input->post('label'),
+                        'tax' => $this->input->post('tax'),
+                    ], ['vendor_id'=>$this->input->post('vendor_id')]);
+                }else{
+                    $this->food_settings_model->insert([
+                        'min_order_price' => $this->input->post('min_order_price'),
+                        'delivery_free_range' => $this->input->post('delivery_free_range'),
+                        'min_delivery_fee' => $this->input->post('min_delivery_fee'),
+                        'ext_delivery_fee' => $this->input->post('ext_delivery_fee'),
+                        'label' => $this->input->post('label'),
+                        'tax' => $this->input->post('tax'),
+                        'vendor_id'=>$this->input->post('vendor_id')
+                    ]);
+                }
+                }
+                redirect('vendor_settings/r', 'refresh');
+             } 
+        } elseif ($type == 'food_item_label') {
+             $this->form_validation->set_rules($this->vendor_settings_model->rules['food_item_label']);
+            if ($this->form_validation->run() == FALSE) {
+                redirect('vendor_settings/r', 'refresh');
+            } else {
+                $res=$this->food_item_model->update([
+                        'id' => $this->input->post('item_id'),
+                        'label' => $this->input->post('label'),
+                    ],'id');
+                redirect('vendor_settings/r', 'refresh');
+             } 
+        }
+    }
 
    /**
      * Logo & fave Favicon
@@ -529,11 +720,42 @@ class Admin extends MY_Controller
     }
     
     public function emp_list($type = 'executive'){
-        if($type == 'users'){
+        if ($type == 'executive') {
+            if(isset($_GET['exe_id'])){
+                $this->data['title'] = 'Vendors';
+                $this->data['content'] = 'emp/emp_vendors';
+                $this->data['categories'] = $this->category_model->get_all();
+                $this->data['vendors'] = $this->vendor_list_model->order_by('id', 'DESC')->with_location('fields:id, address')->where('executive_id', $_GET['exe_id'])->get_all();
+                //$column = count($this->data['vendors']);
+               $a = $d = 1;
+               if(!empty($this->data['vendors'])){foreach ($this->data['vendors'] as $vendors){
+                   if($vendors['status'] == 1){
+                       $this->data['approved_count']  = $a++;
+                   }else{
+                       $this->data['disapproved_count'] = $d++;
+                   }
+               }}
+                $this->_render_page($this->template, $this->data);
+            }else{
+                $this->data['title'] = 'Executives';
+                $this->data['content'] = 'emp/emp_list';
+                $this->data['type'] = 'executive';
+                $this->data['executives'] = $this->user_model->order_by('id', 'DESC')->fields('id, first_name, last_name, email, unique_id')->with_groups('fields: id, name', 'where: name = \'executive\'')->get_all();
+                //echo $this->db->last_query();die;
+                foreach($this->data['executives'] as $key => $val){
+                    $this->data['executives'][$key]['vendors'] = $this->vendor_list_model->fields('id, name, email, unique_id, category_id, executive_id, status')->where(['executive_id' => $this->data['executives'][$key]['id']])->get_all();
+                }
+                $this->_render_page($this->template, $this->data);
+            }
+        }elseif($type == 'users'){
             $this->data['title'] = 'Users';
                 $this->data['content'] = 'emp/emp_list';
                 $this->data['type'] = 'users';
                 $this->data['executives'] = $this->user_model->order_by('id', 'DESC')->fields('id, first_name, last_name, email,wallet, unique_id')->with_groups('fields: id, name', 'where: name = \'user\'')->get_all();
+                //echo $this->db->last_query();die;
+                // foreach($this->data['executives'] as $key => $val){
+                //     $this->data['executives'][$key]['vendors'] = $this->vendor_list_model->fields('id, name, email, unique_id, category_id, executive_id, status')->where(['executive_id' => $this->data['executives'][$key]['id']])->get_all();
+                // }
                 $this->_render_page($this->template, $this->data);
         }
     }
